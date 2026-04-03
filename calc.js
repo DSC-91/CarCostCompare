@@ -17,7 +17,7 @@ const CAR_TYPES = {
 
 const DEFAULT_ANNUAL_KM = 15000;
 const DEFAULT_YEARS     = 5;
-// Post-2030 BEV tax rate in EUR per 100 kg of vehicle weight.
+// Post-2030 BEV tax rate in this app's simplified German tax model: EUR per 100 kg of vehicle weight.
 const ELECTRIC_TAX_RATE_PER_100KG = 0.5;
 
 function toFiniteNumber(value, fallback = 0) {
@@ -97,7 +97,8 @@ function calcKfzSteuer({ carType, displacement, co2, weight = 1500, taxYear = ne
   if (carType === 'electric') {
     if (safeTaxYear <= 2030) return 0;
     // From 2031 onward, BEVs use a weight-based annual tax in this simplified model.
-    return roundCurrency(Math.ceil(safeWeight / 100) * ELECTRIC_TAX_RATE_PER_100KG);
+    const taxableWeightUnits = Math.ceil(safeWeight / 100);
+    return roundCurrency(taxableWeightUnits * ELECTRIC_TAX_RATE_PER_100KG);
   }
 
   const ccmUnits   = Math.ceil(safeDisplacement / 100);

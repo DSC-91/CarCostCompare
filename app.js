@@ -245,6 +245,7 @@ function updateCarFromCard(id, card) {
 
   const readNumber = (selector, fallback, options = {}) => {
     const input = card.querySelector(selector);
+    if (!input) return fallback;
     const { min = 0, max = Infinity, integer = false } = options;
     const rawValue = integer ? parseInt(input.value, 10) : parseFloat(input.value);
     const value = clampNumber(rawValue, { min, max, fallback, integer });
@@ -266,7 +267,7 @@ function updateCarFromCard(id, card) {
   car.co2              = readNumber('.f-co2', 0);
   car.weight           = readNumber('.f-weight', DEFAULT_CAR_WEIGHT, { min: MIN_CAR_WEIGHT });
   car.loanAmount       = readNumber('.f-loan-amount', 0);
-  // Cap displayed APR input at 30% to keep obvious input mistakes out of the comparison.
+  // Cap displayed APR input at 30% to catch obvious entry mistakes such as typing 390 instead of 3.9.
   car.loanRate         = readNumber('.f-loan-rate', 0, { max: MAX_LOAN_RATE_PERCENT }) / 100;
   car.loanTermMonths   = readNumber('.f-loan-term', 0, { min: 0, max: 120, integer: true });
 }

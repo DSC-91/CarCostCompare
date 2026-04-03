@@ -18,6 +18,10 @@ describe('calcKfzSteuer', () => {
     expect(calcKfzSteuer({ carType: 'electric', displacement: 0, co2: 0, weight: 1800 })).toBe(0);
   });
 
+  test('electric car remains tax-free through 2030', () => {
+    expect(calcKfzSteuer({ carType: 'electric', displacement: 0, co2: 0, weight: 1800, taxYear: 2030 })).toBe(0);
+  });
+
   test('electric car after 2030 uses weight-based tax', () => {
     expect(calcKfzSteuer({ carType: 'electric', displacement: 0, co2: 0, weight: 1800, taxYear: 2031 })).toBe(9);
   });
