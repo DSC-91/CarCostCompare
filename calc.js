@@ -90,6 +90,7 @@ function calcKfzSteuer({ carType, displacement, co2, weight = 1500, taxYear = ne
 
   if (carType === 'electric') {
     if (safeTaxYear <= 2030) return 0;
+    // Weight-based tax: €0.50 per 100 kg.
     return Math.round((Math.ceil(safeWeight / 100) * 0.5) * 100) / 100;
   }
 

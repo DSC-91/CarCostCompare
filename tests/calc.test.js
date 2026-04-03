@@ -216,6 +216,7 @@ describe('calcTCO – electric car (with loan)', () => {
 
   test('electric car tax rolls over after 2030 in multi-year comparisons', () => {
     const futureTco = calcTCO({ ...baseElectricCar, taxStartYear: 2029 }, 5);
+    // 2029-2030 are tax-free, 2031-2033 cost €9/year at 1800 kg.
     expect(futureTco.vehicleTax).toBe(27);
   });
 });

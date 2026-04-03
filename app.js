@@ -248,14 +248,15 @@ function updateCarFromCard(id, card) {
     if (!Number.isFinite(value)) value = fallback;
     if (integer) value = Math.trunc(value);
     value = Math.min(max, Math.max(min, value));
-    input.value = integer ? String(value) : String(value);
+    input.value = String(value);
     return value;
   };
 
   car.name             = card.querySelector('.f-name').value.trim() || `Fahrzeug ${id}`;
   car.carType          = card.querySelector('.f-cartype').value;
-  car.purchasePrice    = readNumber('.f-price', 0);
-  car.residualValue    = readNumber('.f-residual', 0, { max: car.purchasePrice });
+  const purchasePrice  = readNumber('.f-price', 0);
+  car.purchasePrice    = purchasePrice;
+  car.residualValue    = readNumber('.f-residual', 0, { max: purchasePrice });
   car.annualKm         = readNumber('.f-km', DEFAULT_ANNUAL_KM, { min: 0 });
   car.consumption      = readNumber('.f-consumption', 0);
   car.fuelPrice        = readNumber('.f-fuelprice', 0);
