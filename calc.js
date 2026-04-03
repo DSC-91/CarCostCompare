@@ -1,0 +1,200 @@
+/**
+ * CarCostCompare – Cost Calculation Engine
+ *
+ * Supports car types: petrol, diesel, electric, hybrid_phev, lpg
+ * All monetary values are in EUR, distances in km.
+ */
+
+// ─── Constants ────────────────────────────────────────────────────────────────
+
+const CAR_TYPES = {
+  petrol:      { label: 'Benzin',           unit: 'L/100 km',   defaultConsumption: 7.5,  defaultFuelPrice: 1.82 },
+  diesel:      { label: 'Diesel',           unit: 'L/100 km',   defaultConsumption: 6.0,  defaultFuelPrice: 1.76 },
+  electric:    { label: 'Elektro (BEV)',    unit: 'kWh/100 km', defaultConsumption: 18.0, defaultFuelPrice: 0.46 },
+  hybrid_phev: { label: 'Plug-in Hybrid',   unit: 'L/100 km',   defaultConsumption: 4.5,  defaultFuelPrice: 1.82 },
+  lpg:         { label: 'LPG / Autogas',    unit: 'L/100 km',   defaultConsumption: 9.5,  defaultFuelPrice: 0.88 },
+};
+
+const DEFAULT_ANNUAL_KM = 15000;
+const DEFAULT_YEARS     = 5;
+
+// ─── Kfz-Steuer (German vehicle tax) ─────────────────────────────────────────
+
+/**
+ * Calculate annual German Kfz-Steuer.
+ *
+ * Simplified model based on 2024 rules:
+ *  - Petrol:  €2.00 per 100 ccm engine displacement  +  CO2 component
+ *  - Diesel:  €9.50 per 100 ccm                       +  CO2 component
+ *  - BEV:     Free until 31 Dec 2030; afterwards €0.50 per 100 kg weight
+ *  - PHEV:    Taxed like petrol (combustion part)
+ *  - LPG:     Same base as petrol
+ *
+ * CO2 component (petrol/diesel/hybrid): for each g/km ABOVE 95 g/km →
+ *   up to 115 g: €2.00/g, up to 135 g: €2.20/g, up to 155 g: €2.50/g,
+ *   up to 175 g: €2.90/g, over 175 g: €3.40/g  (linear simplified here)
+ *
+ * @param {object} params
+ * @param {string} params.carType      – 'petrol'|'diesel'|'electric'|'hybrid_phev'|'lpg'
+ * @param {number} params.displacement – Engine displacement in ccm (ignored for BEV)
+ * @param {number} params.co2          – CO2 emissions in g/km (0 for BEV)
+ * @param {number} [params.weight]     – Kerb weight in kg (used for BEV after 2030)
+ * @returns {number} Annual tax in EUR
+ */
+function calcKfzSteuer({ carType, displacement, co2, weight = 1500 }) {
+  if (carType === 'electric') {
+    return 0; // Free until end of 2030
+  }
+
+  const ccmUnits   = Math.ceil(displacement / 100);
+  let   basePerCcm = 0;
+
+  if (carType === 'diesel') {
+    basePerCcm = 9.50;
+  } else {
+    // petrol, hybrid_phev, lpg
+    basePerCcm = 2.00;
+  }
+
+  const baseTax = ccmUnits * basePerCcm;
+
+  // CO2 surcharge (above 95 g/km threshold)
+  const co2Surplus = Math.max(0, co2 - 95);
+  let co2Tax = 0;
+  if (co2Surplus > 0) {
+    const bands = [
+      { limit: 20, rate: 2.00 },  // 96–115 g/km
+      { limit: 20, rate: 2.20 },  // 116–135 g/km
+      { limit: 20, rate: 2.50 },  // 136–155 g/km
+      { limit: 20, rate: 2.90 },  // 156–175 g/km
+      { limit: Infinity, rate: 3.40 }, // > 175 g/km
+    ];
+    let remaining = co2Surplus;
+    for (const band of bands) {
+      if (remaining <= 0) break;
+      const taxed = Math.min(remaining, band.limit);
+      co2Tax    += taxed * band.rate;
+      remaining -= taxed;
+    }
+  }
+
+  return Math.round((baseTax + co2Tax) * 100) / 100;
+}
+
+// ─── Financing ────────────────────────────────────────────────────────────────
+
+/**
+ * Calculate the total financing cost over a loan term.
+ *
+ * @param {number} loanAmount   – Amount borrowed in EUR
+ * @param {number} annualRate   – Annual interest rate (e.g. 0.039 for 3.9 %)
+ * @param {number} termMonths   – Loan term in months
+ * @returns {{ monthlyPayment: number, totalInterest: number }}
+ */
+function calcFinancing(loanAmount, annualRate, termMonths) {
+  if (loanAmount <= 0 || termMonths <= 0) {
+    return { monthlyPayment: 0, totalInterest: 0 };
+  }
+  if (annualRate === 0) {
+    const monthly = loanAmount / termMonths;
+    return { monthlyPayment: Math.round(monthly * 100) / 100, totalInterest: 0 };
+  }
+  const r        = annualRate / 12;
+  const monthly  = loanAmount * (r * Math.pow(1 + r, termMonths)) / (Math.pow(1 + r, termMonths) - 1);
+  const total    = monthly * termMonths;
+  return {
+    monthlyPayment: Math.round(monthly * 100) / 100,
+    totalInterest:  Math.round((total - loanAmount) * 100) / 100,
+  };
+}
+
+// ─── Total Cost of Ownership ──────────────────────────────────────────────────
+
+/**
+ * Calculate the full TCO breakdown for a car over N years.
+ *
+ * @param {object} car
+ * @param {string}  car.name
+ * @param {string}  car.carType         – key from CAR_TYPES
+ * @param {boolean} car.isCurrent
+ * @param {number}  car.purchasePrice   – EUR
+ * @param {number}  car.residualValue   – Expected value at end of period (EUR)
+ * @param {number}  car.annualKm        – km driven per year
+ * @param {number}  car.consumption     – L/100 km or kWh/100 km
+ * @param {number}  car.fuelPrice       – EUR per L or per kWh
+ * @param {number}  car.annualInsurance – EUR/year
+ * @param {number}  car.annualMaintenance – EUR/year
+ * @param {number}  car.displacement    – ccm (0 for BEV)
+ * @param {number}  car.co2             – g/km
+ * @param {number}  car.weight          – kg
+ * @param {number}  car.loanAmount      – EUR borrowed
+ * @param {number}  car.loanRate        – Annual interest rate (decimal)
+ * @param {number}  car.loanTermMonths  – Months
+ * @param {number}  years               – Comparison period in years
+ * @returns {object} Detailed cost breakdown
+ */
+function calcTCO(car, years) {
+  const fuelCost        = (car.annualKm / 100) * car.consumption * car.fuelPrice * years;
+  const maintenanceCost = car.annualMaintenance * years;
+  const insuranceCost   = car.annualInsurance   * years;
+  const vehicleTax      = calcKfzSteuer({
+    carType:      car.carType,
+    displacement: car.displacement,
+    co2:          car.co2,
+    weight:       car.weight,
+  }) * years;
+
+  const depreciation = car.purchasePrice - car.residualValue;
+
+  const { totalInterest } = calcFinancing(car.loanAmount, car.loanRate, car.loanTermMonths);
+
+  const totalCost = depreciation + fuelCost + maintenanceCost + insuranceCost + vehicleTax + totalInterest;
+  const monthlyCost = totalCost / (years * 12);
+
+  return {
+    name:             car.name,
+    carType:          car.carType,
+    isCurrent:        car.isCurrent,
+    years,
+    purchasePrice:    car.purchasePrice,
+    residualValue:    car.residualValue,
+    depreciation:     Math.round(depreciation     * 100) / 100,
+    fuelCost:         Math.round(fuelCost          * 100) / 100,
+    maintenanceCost:  Math.round(maintenanceCost   * 100) / 100,
+    insuranceCost:    Math.round(insuranceCost     * 100) / 100,
+    vehicleTax:       Math.round(vehicleTax        * 100) / 100,
+    financingCost:    Math.round(totalInterest     * 100) / 100,
+    totalCost:        Math.round(totalCost         * 100) / 100,
+    monthlyCost:      Math.round(monthlyCost       * 100) / 100,
+  };
+}
+
+/**
+ * Compare multiple cars and return TCO results sorted by totalCost ascending.
+ *
+ * @param {object[]} cars
+ * @param {number}   years
+ * @returns {object[]}
+ */
+function compareCars(cars, years) {
+  return cars
+    .map(car => calcTCO(car, years))
+    .sort((a, b) => a.totalCost - b.totalCost);
+}
+
+// ─── Helpers ──────────────────────────────────────────────────────────────────
+
+/** Format a number as Euro currency string. */
+function formatEur(value) {
+  return value.toLocaleString('de-DE', { style: 'currency', currency: 'EUR', maximumFractionDigits: 0 });
+}
+
+// ─── Exports (Node.js / Jest and browser globals) ────────────────────────────
+
+const _calcExports = { CAR_TYPES, DEFAULT_ANNUAL_KM, DEFAULT_YEARS, calcKfzSteuer, calcFinancing, calcTCO, compareCars, formatEur };
+
+if (typeof module !== 'undefined' && module.exports) {
+  module.exports = _calcExports;
+} else if (typeof window !== 'undefined') {
+  Object.assign(window, _calcExports);
+}
