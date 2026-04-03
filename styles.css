@@ -23,33 +23,62 @@ body {
   background: var(--bg);
   color: var(--text);
   line-height: 1.5;
+  min-width: 320px;
 }
 
 /* ── Layout ──────────────────────────────────────────────────────────────── */
 header {
   background: var(--primary);
   color: #fff;
-  padding: 1.2rem 2rem;
+  padding: 1.2rem clamp(1rem, 3vw, 2rem);
   display: flex;
   align-items: center;
+  justify-content: center;
+  flex-wrap: wrap;
   gap: 1rem;
   box-shadow: var(--shadow);
+  text-align: center;
 }
 header svg { flex-shrink: 0; }
 header h1  { margin: 0; font-size: 1.5rem; font-weight: 700; }
 header p   { margin: 0; font-size: .875rem; opacity: .85; }
 
-main { max-width: 1200px; margin: 0 auto; padding: 1.5rem; }
+main {
+  max-width: 1280px;
+  margin: 0 auto;
+  padding: clamp(1rem, 3vw, 1.5rem);
+}
 
 /* ── Controls bar ────────────────────────────────────────────────────────── */
 .controls-bar {
-  display: flex;
-  flex-wrap: wrap;
-  align-items: center;
-  gap: .75rem;
+  display: grid;
+  grid-template-columns: repeat(auto-fit, minmax(280px, 1fr));
+  gap: 1rem;
   margin-bottom: 1.25rem;
 }
-.controls-bar label { font-size: .875rem; color: var(--muted); }
+.controls-group {
+  display: flex;
+  align-items: center;
+  gap: .75rem;
+  background: var(--surface);
+  border: 1px solid var(--border);
+  border-radius: var(--radius);
+  box-shadow: var(--shadow);
+  padding: .9rem 1rem;
+}
+.controls-group-actions {
+  justify-content: flex-start;
+  flex-wrap: wrap;
+}
+.controls-group-period {
+  justify-content: space-between;
+  flex-wrap: wrap;
+}
+.controls-bar label {
+  font-size: .875rem;
+  color: var(--muted);
+  font-weight: 600;
+}
 .controls-bar select, .controls-bar input[type="number"] {
   padding: .35rem .6rem;
   border: 1px solid var(--border);
@@ -57,7 +86,18 @@ main { max-width: 1200px; margin: 0 auto; padding: 1.5rem; }
   font-size: .875rem;
   background: var(--surface);
 }
-.controls-bar .spacer { flex: 1 1 auto; }
+.period-input {
+  display: inline-flex;
+  align-items: center;
+  gap: .5rem;
+}
+.period-input input[type="number"] {
+  width: 70px;
+}
+.period-input span {
+  font-size: .875rem;
+  color: var(--muted);
+}
 
 /* ── Buttons ─────────────────────────────────────────────────────────────── */
 .btn {
@@ -85,7 +125,7 @@ main { max-width: 1200px; margin: 0 auto; padding: 1.5rem; }
 /* ── Car grid ────────────────────────────────────────────────────────────── */
 #cars-grid {
   display: grid;
-  grid-template-columns: repeat(auto-fill, minmax(340px, 1fr));
+  grid-template-columns: repeat(auto-fit, minmax(min(100%, 320px), 1fr));
   gap: 1rem;
   margin-bottom: 1.5rem;
 }
@@ -107,6 +147,7 @@ main { max-width: 1200px; margin: 0 auto; padding: 1.5rem; }
 .car-card-header {
   display: flex;
   align-items: center;
+  flex-wrap: wrap;
   gap: .5rem;
   padding: .7rem 1rem;
   background: rgba(0,0,0,.03);
@@ -199,6 +240,12 @@ main { max-width: 1200px; margin: 0 auto; padding: 1.5rem; }
 /* ── Results section ─────────────────────────────────────────────────────── */
 #results-section { margin-top: 1.5rem; }
 #results-section h2 { margin: 0 0 1rem; font-size: 1.15rem; }
+.results-grid {
+  display: grid;
+  grid-template-columns: repeat(auto-fit, minmax(320px, 1fr));
+  gap: 1.25rem;
+  margin-bottom: 1.25rem;
+}
 
 .chart-wrap {
   background: var(--surface);
@@ -206,7 +253,6 @@ main { max-width: 1200px; margin: 0 auto; padding: 1.5rem; }
   border-radius: var(--radius);
   box-shadow: var(--shadow);
   padding: 1.25rem;
-  margin-bottom: 1.25rem;
 }
 .chart-wrap h3 { margin: 0 0 .75rem; font-size: .95rem; color: var(--muted); }
 
@@ -276,6 +322,61 @@ tbody tr.is-current td { background: var(--current-bg); }
 /* ── Responsive ──────────────────────────────────────────────────────────── */
 @media (max-width: 640px) {
   header { padding: 1rem; }
+  header svg {
+    width: 28px;
+    height: 28px;
+  }
+  header h1 {
+    font-size: 1.3rem;
+  }
   main   { padding: 1rem; }
+  .controls-bar {
+    grid-template-columns: 1fr;
+  }
+  .controls-group {
+    padding: .85rem;
+  }
+  .controls-group-actions {
+    flex-direction: column;
+    align-items: stretch;
+  }
+  .controls-group-actions .btn {
+    justify-content: center;
+    width: 100%;
+  }
+  .controls-group-period {
+    align-items: flex-start;
+  }
+  .period-input {
+    width: 100%;
+  }
+  .period-input input[type="number"] {
+    width: 100%;
+    flex: 1 1 auto;
+  }
   .field-group { grid-template-columns: 1fr; }
+  .car-card-body {
+    padding: .85rem;
+  }
+  .car-card-header .f-name {
+    width: 100%;
+  }
+  .car-card-header .btn-set-current {
+    flex: 1 1 auto;
+  }
+  .results-grid {
+    grid-template-columns: 1fr;
+    gap: 1rem;
+  }
+  .chart-wrap {
+    padding: 1rem;
+  }
+  .chart-container {
+    height: 260px;
+  }
+  thead th,
+  tbody td {
+    padding: .55rem .7rem;
+    font-size: .8rem;
+  }
 }
