@@ -72,6 +72,10 @@ describe('app decimal input handling', () => {
       'Audi A3 Sportback 35 TDI (150 PS)',
       'Audi A4 35 TDI',
       'Tesla Model 3 RWD',
+      'VW ID.3 Pro',
+      'VW ID.4 Pro',
+      'BMW i4 eDrive40',
+      'Mercedes EQA 250+',
       'Škoda Enyaq 85',
       'VW ID.7 Pro',
       'Hyundai Kona Elektro 65',
@@ -110,5 +114,20 @@ describe('app decimal input handling', () => {
     expect(updatedCard.querySelector('.f-displacement').disabled).toBe(true);
     expect(updatedCard.querySelector('.f-co2').value).toBe('0');
     expect(updatedCard.querySelector('.f-co2').disabled).toBe(true);
+  });
+
+  test('selecting the VW ID.4 preset fills the researched electric values', () => {
+    const presetSelect = getFirstCarCard().querySelector('.f-preset');
+
+    presetSelect.value = 'vw_id4_pro';
+    presetSelect.dispatchEvent(new window.Event('change', { bubbles: true }));
+
+    const updatedCard = getFirstCarCard();
+    expect(updatedCard.querySelector('.f-name').value).toBe('VW ID.4 Pro');
+    expect(updatedCard.querySelector('.f-cartype').value).toBe('electric');
+    expect(updatedCard.querySelector('.f-consumption').value).toBe('16.6');
+    expect(updatedCard.querySelector('.f-price').value).toBe('40580');
+    expect(updatedCard.querySelector('.f-weight').value).toBe('2117');
+    expect(updatedCard.querySelector('.f-thg').value).toBe('300');
   });
 });
