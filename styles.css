@@ -152,6 +152,7 @@ main { max-width: 1200px; margin: 0 auto; padding: 1.5rem; }
   display: flex;
   flex-direction: column;
   gap: .2rem;
+  min-width: 0; /* prevent grid blowout */
 }
 .field label {
   font-size: .75rem;
@@ -159,14 +160,19 @@ main { max-width: 1200px; margin: 0 auto; padding: 1.5rem; }
   font-weight: 500;
   text-transform: uppercase;
   letter-spacing: .04em;
+  overflow: hidden;
+  text-overflow: ellipsis;
+  white-space: nowrap;
 }
 .field input, .field select {
+  width: 100%;
   padding: .4rem .6rem;
   border: 1px solid var(--border);
   border-radius: 6px;
   font-size: .875rem;
   background: var(--surface);
   transition: border-color .15s;
+  box-sizing: border-box;
 }
 .field input:focus, .field select:focus {
   outline: none;

@@ -89,10 +89,9 @@ function buildCarCard(car) {
   card.innerHTML = `
     <div class="car-card-header">
       <input type="text" class="f-name" value="${esc(car.name)}" placeholder="Fahrzeugname" aria-label="Fahrzeugname">
-      ${car.isCurrent ? '<span class="badge-current">Aktuell</span>' : ''}
       <button class="btn btn-ghost btn-sm btn-set-current" title="Als aktuelles Fahrzeug markieren"
         ${car.isCurrent ? 'disabled' : ''}>
-        ${car.isCurrent ? '✓ Aktuell' : 'Als aktuell markieren'}
+        ${car.isCurrent ? '✓ Aktuell' : 'Als Aktuell'}
       </button>
       <button class="btn btn-danger btn-sm btn-icon btn-remove" title="Fahrzeug entfernen" aria-label="Fahrzeug entfernen">✕</button>
     </div>
@@ -199,6 +198,7 @@ function buildCarCard(car) {
   card.querySelector('.btn-set-current').addEventListener('click', () => {
     cars.forEach(c => { c.isCurrent = c.id === car.id; });
     renderCars();
+    renderResults();
   });
 
   // ── event: remove
@@ -207,6 +207,7 @@ function buildCarCard(car) {
     cars = cars.filter(c => c.id !== car.id);
     if (wasCurrent && cars.length > 0) cars[0].isCurrent = true;
     renderCars();
+    renderResults();
   });
 
   // ── event: car type change (update defaults for unit labels)
