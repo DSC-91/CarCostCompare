@@ -220,7 +220,7 @@ describe('calcTCO – electric car (with loan)', () => {
 
   test('electric car tax rolls over after 2030 in multi-year comparisons', () => {
     const futureTco = calcTCO({ ...baseElectricCar, taxStartYear: 2029 }, 5);
-    // At 1800 kg the post-2030 BEV tax is €9/year, so 2029-2030 are free and 2031-2033 add up to €27.
+    // Inclusive 2029-2033 window: 2029-2030 are free and 2031-2033 add €9/year at 1800 kg, totaling €27.
     expect(futureTco.vehicleTax).toBe(27);
   });
 });

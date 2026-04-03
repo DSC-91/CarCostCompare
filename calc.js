@@ -17,7 +17,7 @@ const CAR_TYPES = {
 
 const DEFAULT_ANNUAL_KM = 15000;
 const DEFAULT_YEARS     = 5;
-// Post-2030 BEV tax rate in this app's simplified German tax model: EUR per 100 kg of vehicle weight.
+// Post-2030 BEV tax rate in this app's simplified German tax model: EUR/year per 100 kg of vehicle weight.
 const ELECTRIC_TAX_RATE_PER_100KG = 0.5;
 
 function toFiniteNumber(value, fallback = 0) {
@@ -43,6 +43,22 @@ function roundCurrency(value) {
   return Math.round(value * 100) / 100;
 }
 
+/**
+ * Calculate total vehicle tax over a multi-year comparison period.
+ *
+ * For BEVs this applies the yearly exemption through 2030 and the post-2030
+ * weight-based tax afterwards. Other drivetrains use the same annual tax for
+ * each year in the comparison period.
+ *
+ * @param {object} params
+ * @param {string} params.carType
+ * @param {number} params.displacement
+ * @param {number} params.co2
+ * @param {number} params.weight
+ * @param {number} params.years
+ * @param {number} [params.startYear]
+ * @returns {number}
+ */
 function calcMultiYearVehicleTax({ carType, displacement, co2, weight, years, startYear = new Date().getFullYear() }) {
   const safeYears = normalizeYears(years);
   const safeStartYear = clampNumber(startYear, { min: 0, fallback: new Date().getFullYear(), integer: true });
