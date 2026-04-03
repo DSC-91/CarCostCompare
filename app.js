@@ -157,7 +157,7 @@ const VEHICLE_PRESETS = {
       annualThgQuote:    DEFAULT_THG_QUOTA,
       displacement:      0,
       co2:               0,
-      weight:            2040,
+      weight:            1940,
       loanAmount:        0,
       loanRate:          0,
       loanTermMonths:    0,
