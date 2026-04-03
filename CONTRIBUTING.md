@@ -14,14 +14,14 @@ Open `http://localhost:8080` after starting the local server, or open `index.htm
 
 ## Fastest way to iterate
 
-1. Read `/home/runner/work/CarCostCompare/CarCostCompare/README.md` for product behavior.
+1. Read `README.md` for product behavior.
 2. Run `npm test` before and after changes.
 3. Edit only the file that owns the behavior:
-   - `/home/runner/work/CarCostCompare/CarCostCompare/calc.js` for cost, tax, financing, and comparison logic
-   - `/home/runner/work/CarCostCompare/CarCostCompare/app.js` for DOM updates and user interaction handling
-   - `/home/runner/work/CarCostCompare/CarCostCompare/index.html` for structure and form fields
-   - `/home/runner/work/CarCostCompare/CarCostCompare/styles.css` for presentation
-   - `/home/runner/work/CarCostCompare/CarCostCompare/tests/*.test.js` for regression coverage
+   - `calc.js` for cost, tax, financing, and comparison logic
+   - `app.js` for DOM updates and user interaction handling
+   - `index.html` for structure and form fields
+   - `styles.css` for presentation
+   - `tests/*.test.js` for regression coverage
 
 ## Validation
 

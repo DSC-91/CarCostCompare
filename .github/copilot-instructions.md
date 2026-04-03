@@ -8,7 +8,7 @@ Provide quick, actionable guidance for the Copilot agent to be productive in thi
 Repository status
 -----------------
 - Current snapshot: static HTML/CSS/JS app with top-level sources (`index.html`, `app.js`, `calc.js`, `styles.css`) and Jest tests in `tests/`.
-- Primary docs live in `/home/runner/work/CarCostCompare/CarCostCompare/README.md` and `/home/runner/work/CarCostCompare/CarCostCompare/CONTRIBUTING.md`.
+- Primary docs live in `README.md` and `CONTRIBUTING.md`.
 
 Agent workflow
 --------------
