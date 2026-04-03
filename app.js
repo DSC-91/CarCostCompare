@@ -15,6 +15,134 @@ const { CAR_TYPES, DEFAULT_ANNUAL_KM, DEFAULT_YEARS, DEFAULT_THG_QUOTA, compareC
 const MIN_CAR_WEIGHT = 500;
 const DEFAULT_CAR_WEIGHT = 1400;
 const MAX_LOAN_RATE_PERCENT = 30;
+const VEHICLE_PRESETS = {
+  audi_a3_35_tdi: {
+    label: 'Audi A3 Sportback 35 TDI (150 PS)',
+    values: {
+      name:              'Audi A3 Sportback 35 TDI (150 PS)',
+      carType:           'diesel',
+      purchasePrice:     39200,
+      residualValue:     21500,
+      annualKm:          DEFAULT_ANNUAL_KM,
+      consumption:       4.8,
+      fuelPrice:         CAR_TYPES.diesel.defaultFuelPrice,
+      annualInsurance:   1000,
+      annualMaintenance: 700,
+      annualThgQuote:    0,
+      displacement:      1968,
+      co2:               125,
+      weight:            1415,
+      loanAmount:        0,
+      loanRate:          0,
+      loanTermMonths:    0,
+    },
+  },
+  audi_a4_35_tdi: {
+    label: 'Audi A4 35 TDI',
+    values: {
+      name:              'Audi A4 35 TDI',
+      carType:           'diesel',
+      purchasePrice:     45800,
+      residualValue:     25500,
+      annualKm:          DEFAULT_ANNUAL_KM,
+      consumption:       5.0,
+      fuelPrice:         CAR_TYPES.diesel.defaultFuelPrice,
+      annualInsurance:   1150,
+      annualMaintenance: 850,
+      annualThgQuote:    0,
+      displacement:      1968,
+      co2:               130,
+      weight:            1580,
+      loanAmount:        0,
+      loanRate:          0,
+      loanTermMonths:    0,
+    },
+  },
+  tesla_model_3_rwd: {
+    label: 'Tesla Model 3 RWD',
+    values: {
+      name:              'Tesla Model 3 RWD',
+      carType:           'electric',
+      purchasePrice:     37970,
+      residualValue:     23000,
+      annualKm:          DEFAULT_ANNUAL_KM,
+      consumption:       13.7,
+      fuelPrice:         CAR_TYPES.electric.defaultFuelPrice,
+      annualInsurance:   1100,
+      annualMaintenance: 350,
+      annualThgQuote:    DEFAULT_THG_QUOTA,
+      displacement:      0,
+      co2:               0,
+      weight:            1847,
+      loanAmount:        0,
+      loanRate:          0,
+      loanTermMonths:    0,
+    },
+  },
+  skoda_enyaq_85: {
+    label: 'Škoda Enyaq 85',
+    values: {
+      name:              'Škoda Enyaq 85',
+      carType:           'electric',
+      purchasePrice:     48500,
+      residualValue:     28000,
+      annualKm:          DEFAULT_ANNUAL_KM,
+      consumption:       16.4,
+      fuelPrice:         CAR_TYPES.electric.defaultFuelPrice,
+      annualInsurance:   1100,
+      annualMaintenance: 450,
+      annualThgQuote:    DEFAULT_THG_QUOTA,
+      displacement:      0,
+      co2:               0,
+      weight:            2117,
+      loanAmount:        0,
+      loanRate:          0,
+      loanTermMonths:    0,
+    },
+  },
+  vw_id7_pro: {
+    label: 'VW ID.7 Pro',
+    values: {
+      name:              'VW ID.7 Pro',
+      carType:           'electric',
+      purchasePrice:     56995,
+      residualValue:     33000,
+      annualKm:          DEFAULT_ANNUAL_KM,
+      consumption:       15.8,
+      fuelPrice:         CAR_TYPES.electric.defaultFuelPrice,
+      annualInsurance:   1200,
+      annualMaintenance: 450,
+      annualThgQuote:    DEFAULT_THG_QUOTA,
+      displacement:      0,
+      co2:               0,
+      weight:            2172,
+      loanAmount:        0,
+      loanRate:          0,
+      loanTermMonths:    0,
+    },
+  },
+  hyundai_kona_elektro_65: {
+    label: 'Hyundai Kona Elektro 65',
+    values: {
+      name:              'Hyundai Kona Elektro 65',
+      carType:           'electric',
+      purchasePrice:     45000,
+      residualValue:     25500,
+      annualKm:          DEFAULT_ANNUAL_KM,
+      consumption:       16.1,
+      fuelPrice:         CAR_TYPES.electric.defaultFuelPrice,
+      annualInsurance:   1000,
+      annualMaintenance: 400,
+      annualThgQuote:    DEFAULT_THG_QUOTA,
+      displacement:      0,
+      co2:               0,
+      weight:            1760,
+      loanAmount:        0,
+      loanRate:          0,
+      loanTermMonths:    0,
+    },
+  },
+};
 
 // ─── App state ────────────────────────────────────────────────────────────────
 let cars   = [];       // array of car objects (mutable state)
@@ -41,6 +169,7 @@ function makeCar(overrides = {}) {
   const type    = CAR_TYPES[carType];
   return {
     id:               nextId++,
+    presetKey:        '',
     name:             `Fahrzeug ${nextId - 1}`,
     carType,
     isCurrent:        cars.length === 0, // first car is current by default
@@ -60,6 +189,15 @@ function makeCar(overrides = {}) {
     loanTermMonths:   60,
     ...overrides,
   };
+}
+
+function applyPresetToCar(car, presetKey) {
+  const preset = VEHICLE_PRESETS[presetKey];
+  if (!preset) {
+    car.presetKey = '';
+    return;
+  }
+  Object.assign(car, preset.values, { presetKey });
 }
 
 // ─── Rendering ────────────────────────────────────────────────────────────────
@@ -101,6 +239,17 @@ function buildCarCard(car) {
     </div>
     <div class="car-card-body">
       <div class="section-label">Fahrzeugtyp</div>
+      <div class="field-group">
+        <div class="field">
+          <label>Preset laden</label>
+          <select class="f-preset" aria-label="Fahrzeug-Preset">
+            <option value="">Eigenes Fahrzeug</option>
+            ${Object.entries(VEHICLE_PRESETS).map(([key, preset]) =>
+              `<option value="${key}"${key === car.presetKey ? ' selected' : ''}>${preset.label}</option>`
+            ).join('')}
+          </select>
+        </div>
+      </div>
       <div class="field-group">
         <div class="field">
           <label>Antriebsart</label>
@@ -220,6 +369,19 @@ function buildCarCard(car) {
     renderResults();
   });
 
+  // ── event: apply preset
+  card.querySelector('.f-preset').addEventListener('change', e => {
+    const presetKey = e.target.value;
+    if (!presetKey) {
+      updateCarFromCard(car.id, card);
+      car.presetKey = '';
+      return;
+    }
+    applyPresetToCar(car, presetKey);
+    renderCars();
+    renderResults();
+  });
+
   // ── event: car type change (update defaults for unit labels)
   card.querySelector('.f-cartype').addEventListener('change', e => {
     const newType = e.target.value;
@@ -278,6 +440,7 @@ function updateCarFromCard(id, card, { normalizeNumbers = false } = {}) {
   };
 
   car.name             = card.querySelector('.f-name').value.trim() || `Fahrzeug ${id}`;
+  car.presetKey        = card.querySelector('.f-preset').value;
   car.carType          = card.querySelector('.f-cartype').value;
   const purchasePrice  = readNumber('.f-price', 0);
   car.purchasePrice    = purchasePrice;

@@ -9,6 +9,7 @@ Eine schlanke, serverlose Webanwendung (reines HTML / CSS / JavaScript), die dir
 | Feature | Details |
 |---|---|
 | Mehrere Fahrzeuge | Beliebig viele Fahrzeuge vergleichen |
+| Fahrzeug-Presets | Vorgefüllte Audi-Diesel- und aktuelle Elektroauto-Beispiele laden |
 | Aktuelles Fahrzeug markieren | Kennzeichne dein Bestandsfahrzeug als Referenz |
 | Alle Kostenarten | Wertverlust, Kraftstoff/Strom, Wartung, Versicherung, Kfz-Steuer, Finanzierung |
 | THG-Quote für BEV | Jährliche THG-Prämie für reine Elektroautos als Gutschrift im Kostenvergleich |
