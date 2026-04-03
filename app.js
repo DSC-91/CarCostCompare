@@ -12,6 +12,8 @@ if (typeof require !== 'undefined' && typeof window === 'undefined') {
 }
 
 const { CAR_TYPES, DEFAULT_ANNUAL_KM, DEFAULT_YEARS, compareCars, formatEur } = _calc;
+const MIN_CAR_WEIGHT = 500;
+const DEFAULT_CAR_WEIGHT = 1400;
 
 // ─── App state ────────────────────────────────────────────────────────────────
 let cars   = [];       // array of car objects (mutable state)
@@ -50,7 +52,7 @@ function makeCar(overrides = {}) {
     annualMaintenance: 600,
     displacement:     1400,
     co2:              130,
-    weight:           1400,
+    weight:           DEFAULT_CAR_WEIGHT,
     loanAmount:       0,
     loanRate:         0.039,
     loanTermMonths:   60,
@@ -122,7 +124,7 @@ function buildCarCard(car) {
         </div>
         <div class="field">
           <label>Leergewicht</label>
-          <input type="number" class="f-weight" value="${car.weight}" min="500" step="50">
+          <input type="number" class="f-weight" value="${car.weight}" min="${MIN_CAR_WEIGHT}" step="50">
           <span class="unit">kg</span>
         </div>
       </div>
@@ -243,9 +245,9 @@ function updateCarFromCard(id, card) {
   const readNumber = (selector, fallback, options = {}) => {
     const input = card.querySelector(selector);
     const { min = 0, max = Infinity, integer = false } = options;
-    let value = integer ? parseInt(input.value, 10) : parseFloat(input.value);
+    const rawValue = integer ? parseInt(input.value, 10) : parseFloat(input.value);
+    let value = Number.isFinite(rawValue) ? rawValue : fallback;
 
-    if (!Number.isFinite(value)) value = fallback;
     if (integer) value = Math.trunc(value);
     value = Math.min(max, Math.max(min, value));
     input.value = String(value);
@@ -264,7 +266,7 @@ function updateCarFromCard(id, card) {
   car.annualMaintenance= readNumber('.f-maintenance', 0);
   car.displacement     = readNumber('.f-displacement', 0);
   car.co2              = readNumber('.f-co2', 0);
-  car.weight           = readNumber('.f-weight', 1400, { min: 500 });
+  car.weight           = readNumber('.f-weight', DEFAULT_CAR_WEIGHT, { min: MIN_CAR_WEIGHT });
   car.loanAmount       = readNumber('.f-loan-amount', 0);
   car.loanRate         = readNumber('.f-loan-rate', 0, { max: 30 }) / 100;
   car.loanTermMonths   = readNumber('.f-loan-term', 0, { min: 0, max: 120, integer: true });

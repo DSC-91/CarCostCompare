@@ -17,6 +17,7 @@ const CAR_TYPES = {
 
 const DEFAULT_ANNUAL_KM = 15000;
 const DEFAULT_YEARS     = 5;
+const ELECTRIC_TAX_RATE_PER_100KG = 0.5;
 
 function toFiniteNumber(value, fallback = 0) {
   const parsed = Number(value);
@@ -35,6 +36,10 @@ function normalizeYears(years) {
   const parsed = toFiniteNumber(years, DEFAULT_YEARS);
   if (parsed < 1) return DEFAULT_YEARS;
   return Math.trunc(parsed);
+}
+
+function roundCurrency(value) {
+  return Math.round(value * 100) / 100;
 }
 
 function calcVehicleTaxTotal({ carType, displacement, co2, weight, years, startYear = new Date().getFullYear() }) {
@@ -90,8 +95,7 @@ function calcKfzSteuer({ carType, displacement, co2, weight = 1500, taxYear = ne
 
   if (carType === 'electric') {
     if (safeTaxYear <= 2030) return 0;
-    // Weight-based tax: €0.50 per 100 kg.
-    return Math.round((Math.ceil(safeWeight / 100) * 0.5) * 100) / 100;
+    return roundCurrency(Math.ceil(safeWeight / 100) * ELECTRIC_TAX_RATE_PER_100KG);
   }
 
   const ccmUnits   = Math.ceil(safeDisplacement / 100);
@@ -126,7 +130,7 @@ function calcKfzSteuer({ carType, displacement, co2, weight = 1500, taxYear = ne
     }
   }
 
-  return Math.round((baseTax + co2Tax) * 100) / 100;
+  return roundCurrency(baseTax + co2Tax);
 }
 
 // ─── Financing ────────────────────────────────────────────────────────────────
@@ -157,8 +161,8 @@ function calcFinancing(loanAmount, annualRate, termMonths) {
   const monthly  = safeLoanAmount * (r * Math.pow(1 + r, safeTermMonths)) / (Math.pow(1 + r, safeTermMonths) - 1);
   const total    = monthly * safeTermMonths;
   return {
-    monthlyPayment: Math.round(monthly * 100) / 100,
-    totalInterest:  Math.round((total - safeLoanAmount) * 100) / 100,
+    monthlyPayment: roundCurrency(monthly),
+    totalInterest:  roundCurrency(total - safeLoanAmount),
   };
 }
 
@@ -230,14 +234,14 @@ function calcTCO(car, years) {
     years:            safeYears,
     purchasePrice,
     residualValue,
-    depreciation:     Math.round(depreciation     * 100) / 100,
-    fuelCost:         Math.round(fuelCost          * 100) / 100,
-    maintenanceCost:  Math.round(maintenanceCost   * 100) / 100,
-    insuranceCost:    Math.round(insuranceCost     * 100) / 100,
-    vehicleTax:       Math.round(vehicleTax        * 100) / 100,
-    financingCost:    Math.round(totalInterest     * 100) / 100,
-    totalCost:        Math.round(totalCost         * 100) / 100,
-    monthlyCost:      Math.round(monthlyCost       * 100) / 100,
+    depreciation:     roundCurrency(depreciation),
+    fuelCost:         roundCurrency(fuelCost),
+    maintenanceCost:  roundCurrency(maintenanceCost),
+    insuranceCost:    roundCurrency(insuranceCost),
+    vehicleTax:       roundCurrency(vehicleTax),
+    financingCost:    roundCurrency(totalInterest),
+    totalCost:        roundCurrency(totalCost),
+    monthlyCost:      roundCurrency(monthlyCost),
   };
 }
 
