@@ -41,7 +41,8 @@ function normalizeYears(years) {
 }
 
 function roundCurrency(value) {
-  return Math.round(value * 100) / 100;
+  const rounded = Math.round(value * 100) / 100;
+  return Object.is(rounded, -0) ? 0 : rounded;
 }
 
 /**
