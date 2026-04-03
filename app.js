@@ -11,7 +11,7 @@ if (typeof require !== 'undefined' && typeof window === 'undefined') {
   _calc = window;
 }
 
-const { CAR_TYPES, DEFAULT_ANNUAL_KM, DEFAULT_YEARS, compareCars, formatEur, clampNumber } = _calc;
+const { CAR_TYPES, DEFAULT_ANNUAL_KM, DEFAULT_YEARS, DEFAULT_THG_QUOTA, compareCars, formatEur, clampNumber } = _calc;
 const MIN_CAR_WEIGHT = 500;
 const DEFAULT_CAR_WEIGHT = 1400;
 const MAX_LOAN_RATE_PERCENT = 30;
@@ -51,6 +51,7 @@ function makeCar(overrides = {}) {
     fuelPrice:        type.defaultFuelPrice,
     annualInsurance:  800,
     annualMaintenance: 600,
+    annualThgQuote:   carType === 'electric' ? DEFAULT_THG_QUOTA : 0,
     displacement:     1400,
     co2:              130,
     weight:           DEFAULT_CAR_WEIGHT,
@@ -173,6 +174,12 @@ function buildCarCard(car) {
           <input type="number" class="f-maintenance" value="${car.annualMaintenance}" min="0" step="50">
           <span class="unit">EUR/Jahr</span>
         </div>
+        <div class="field">
+          <label class="f-thg-label">${isElec ? 'THG-Quote' : 'THG-Quote (nur BEV)'}</label>
+          <input type="number" class="f-thg" value="${car.annualThgQuote}" min="0" step="10"
+            ${isElec ? '' : 'disabled placeholder="0"'}>
+          <span class="unit">EUR/Jahr</span>
+        </div>
       </div>
 
       <div class="section-label">Finanzierung (optional)</div>
@@ -218,6 +225,8 @@ function buildCarCard(car) {
     const newType = e.target.value;
     const info    = CAR_TYPES[newType];
     const isE     = newType === 'electric';
+    const previousType = car.carType;
+    const thgInput = card.querySelector('.f-thg');
     updateCarFromCard(car.id, card);
     // update unit labels
     card.querySelector('.f-unit').textContent      = info.unit;
@@ -229,6 +238,12 @@ function buildCarCard(car) {
       card.querySelector('.f-co2').value          = 0;
       card.querySelector('.f-displacement').value = 0;
     }
+    card.querySelector('.f-thg-label').textContent = isE ? 'THG-Quote' : 'THG-Quote (nur BEV)';
+    thgInput.disabled = !isE;
+    if (isE && previousType !== 'electric' && clampNumber(thgInput.value, { fallback: 0 }) === 0) {
+      thgInput.value = String(DEFAULT_THG_QUOTA);
+    }
+    updateCarFromCard(car.id, card);
   });
 
   // ── event: live sync all inputs
@@ -272,6 +287,7 @@ function updateCarFromCard(id, card, { normalizeNumbers = false } = {}) {
   car.fuelPrice        = readNumber('.f-fuelprice', 0);
   car.annualInsurance  = readNumber('.f-insurance', 0);
   car.annualMaintenance= readNumber('.f-maintenance', 0);
+  car.annualThgQuote   = readNumber('.f-thg', car.carType === 'electric' ? DEFAULT_THG_QUOTA : 0);
   car.displacement     = readNumber('.f-displacement', 0);
   car.co2              = readNumber('.f-co2', 0);
   car.weight           = readNumber('.f-weight', DEFAULT_CAR_WEIGHT, { min: MIN_CAR_WEIGHT });
@@ -287,13 +303,14 @@ const CHART_COLORS = [
   '#2563eb','#16a34a','#dc2626','#d97706','#7c3aed','#0891b2','#db2777','#65a30d',
 ];
 
-const COST_KEYS = ['depreciation','fuelCost','maintenanceCost','insuranceCost','vehicleTax','financingCost'];
+const COST_KEYS = ['depreciation','fuelCost','maintenanceCost','insuranceCost','vehicleTax','thgQuotaBenefit','financingCost'];
 const COST_LABELS = {
   depreciation:    'Wertverlust',
   fuelCost:        'Kraftstoff / Strom',
   maintenanceCost: 'Wartung',
   insuranceCost:   'Versicherung',
   vehicleTax:      'Kfz-Steuer',
+  thgQuotaBenefit: 'THG-Quote',
   financingCost:   'Finanzierungskosten',
 };
 
@@ -386,6 +403,7 @@ function renderBreakdownChart(results) {
     maintenanceCost: '#10b981',
     insuranceCost:   '#8b5cf6',
     vehicleTax:      '#ef4444',
+    thgQuotaBenefit: '#15803d',
     financingCost:   '#06b6d4',
   };
 
@@ -505,6 +523,7 @@ cars.push(makeCar({
   fuelPrice:        0.46,
   annualInsurance:  950,
   annualMaintenance: 350,
+  annualThgQuote:   DEFAULT_THG_QUOTA,
   displacement:     0,
   co2:              0,
   weight:           1752,

@@ -11,6 +11,7 @@ Eine schlanke, serverlose Webanwendung (reines HTML / CSS / JavaScript), die dir
 | Mehrere Fahrzeuge | Beliebig viele Fahrzeuge vergleichen |
 | Aktuelles Fahrzeug markieren | Kennzeichne dein Bestandsfahrzeug als Referenz |
 | Alle Kostenarten | Wertverlust, Kraftstoff/Strom, Wartung, Versicherung, Kfz-Steuer, Finanzierung |
+| THG-Quote für BEV | Jährliche THG-Prämie für reine Elektroautos als Gutschrift im Kostenvergleich |
 | Alle Antriebsarten | Benzin, Diesel, Elektro (BEV), Plug-in Hybrid (PHEV), LPG/Autogas |
 | Kfz-Steuer (DE) | Vereinfachtes Modell nach deutschem Recht 2024 (Hubraum + CO₂-Komponente) |
 | Finanzierungsrechner | Annuitätendarlehen mit Zinsberechnung |
@@ -84,8 +85,23 @@ Gesamtkosten = Wertverlust
              + Wartungskosten (jährlich × Jahre)
              + Versicherung (jährlich × Jahre)
              + Kfz-Steuer (jährlich × Jahre)
+             − THG-Quote (nur BEV, jährlich × Jahre)
              + Finanzierungskosten (Gesamtrückzahlung − Darlehensbetrag)
 ```
+
+## THG-Quote in Deutschland (BEV)
+
+Die App berücksichtigt nun die **THG-Quote** für reine Batterie-Elektrofahrzeuge als jährliche Gutschrift:
+
+- **Anspruch in der Regel nur für reine Elektroautos (BEV)**, nicht für Plug-in-Hybride.
+- Die Auszahlung wird **jährlich** beantragt und kann je nach Anbieter und Marktpreis schwanken.
+- Deshalb ist der THG-Wert in der App **editierbar**. Für BEV ist standardmäßig ein konservativer Richtwert von **300 EUR/Jahr** hinterlegt.
+
+Quellen zur Einordnung:
+
+- ADAC: https://www.adac.de/rund-ums-fahrzeug/elektromobilitaet/elektroauto/thg-quote/
+- Verbraucherzentrale: https://www.verbraucherzentrale.de/wissen/energie/emobilitaet/thgquote-so-koennen-sie-mit-einem-reinen-eauto-geld-verdienen-68695
+- HUK-COBURG: https://www.huk.de/fahrzeuge/ratgeber/elektroautos/co2-zertifikat-verkaufen.html
 
 ## Lizenz
 

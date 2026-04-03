@@ -17,6 +17,7 @@ const CAR_TYPES = {
 
 const DEFAULT_ANNUAL_KM = 15000;
 const DEFAULT_YEARS     = 5;
+const DEFAULT_THG_QUOTA = 300;
 // Post-2030 BEV tax rate in this app's simplified German tax model: EUR/year per 100 kg of vehicle weight.
 const ELECTRIC_TAX_RATE_PER_100KG = 0.5;
 
@@ -40,7 +41,9 @@ function normalizeYears(years) {
 }
 
 function roundCurrency(value) {
-  return Math.round(value * 100) / 100;
+  const rounded = Math.round(value * 100) / 100;
+  // Normalize -0 to 0 for stable UI display and strict test comparisons.
+  return Object.is(rounded, -0) ? 0 : rounded;
 }
 
 /**
@@ -207,6 +210,7 @@ function calcFinancing(loanAmount, annualRate, termMonths) {
  * @param {number}  car.loanAmount      – EUR borrowed
  * @param {number}  car.loanRate        – Annual interest rate (decimal)
  * @param {number}  car.loanTermMonths  – Months
+ * @param {number}  [car.annualThgQuote] – Annual THG-Quote income for BEVs (EUR/year)
  * @param {number}  years               – Comparison period in years
  * @returns {object} Detailed cost breakdown
  */
@@ -226,6 +230,9 @@ function calcTCO(car, years) {
   const loanRate = clampNumber(car.loanRate);
   const loanTermMonths = clampNumber(car.loanTermMonths, { integer: true });
   const taxStartYear = clampNumber(car.taxStartYear, { min: 0, fallback: new Date().getFullYear(), integer: true });
+  const annualThgQuote = car.carType === 'electric'
+    ? clampNumber(car.annualThgQuote, { fallback: DEFAULT_THG_QUOTA })
+    : 0;
 
   const fuelCost        = (annualKm / 100) * consumption * fuelPrice * safeYears;
   const maintenanceCost = annualMaintenance * safeYears;
@@ -240,10 +247,11 @@ function calcTCO(car, years) {
   });
 
   const depreciation = purchasePrice - residualValue;
+  const thgQuotaBenefit = annualThgQuote * safeYears;
 
   const { totalInterest } = calcFinancing(loanAmount, loanRate, loanTermMonths);
 
-  const totalCost = depreciation + fuelCost + maintenanceCost + insuranceCost + vehicleTax + totalInterest;
+  const totalCost = depreciation + fuelCost + maintenanceCost + insuranceCost + vehicleTax + totalInterest - thgQuotaBenefit;
   const monthlyCost = totalCost / (safeYears * 12);
 
   return {
@@ -258,6 +266,7 @@ function calcTCO(car, years) {
     maintenanceCost:  roundCurrency(maintenanceCost),
     insuranceCost:    roundCurrency(insuranceCost),
     vehicleTax:       roundCurrency(vehicleTax),
+    thgQuotaBenefit:  roundCurrency(-thgQuotaBenefit),
     financingCost:    roundCurrency(totalInterest),
     totalCost:        roundCurrency(totalCost),
     monthlyCost:      roundCurrency(monthlyCost),
@@ -286,7 +295,7 @@ function formatEur(value) {
 
 // ─── Exports (Node.js / Jest and browser globals) ────────────────────────────
 
-const _calcExports = { CAR_TYPES, DEFAULT_ANNUAL_KM, DEFAULT_YEARS, calcKfzSteuer, calcFinancing, calcTCO, compareCars, formatEur, clampNumber };
+const _calcExports = { CAR_TYPES, DEFAULT_ANNUAL_KM, DEFAULT_YEARS, DEFAULT_THG_QUOTA, calcKfzSteuer, calcFinancing, calcTCO, compareCars, formatEur, clampNumber };
 
 if (typeof module !== 'undefined' && module.exports) {
   module.exports = _calcExports;

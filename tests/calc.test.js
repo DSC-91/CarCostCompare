@@ -9,6 +9,7 @@ const {
   CAR_TYPES,
   DEFAULT_ANNUAL_KM,
   DEFAULT_YEARS,
+  DEFAULT_THG_QUOTA,
 } = require('../calc.js');
 
 // ─── calcKfzSteuer ────────────────────────────────────────────────────────────
@@ -149,6 +150,7 @@ const baseElectricCar = {
   fuelPrice:          0.46,
   annualInsurance:    900,
   annualMaintenance:  400,
+  annualThgQuote:     DEFAULT_THG_QUOTA,
   displacement:       0,
   co2:                0,
   weight:             1800,
@@ -212,6 +214,10 @@ describe('calcTCO – electric car (with loan)', () => {
     expect(tco.financingCost).toBeGreaterThan(0);
   });
 
+  test('THG-Quote reduces electric vehicle total cost', () => {
+    expect(tco.thgQuotaBenefit).toBe(-1500);
+  });
+
   test('electric car fuel cost lower than equivalent petrol', () => {
     const petrolTco = calcTCO({ ...basePetrolCar, annualKm: 15000, consumption: 7.0, fuelPrice: 1.82 }, 5);
     // electric consumption 17 kWh at €0.46 vs petrol 7L at €1.82
@@ -222,6 +228,11 @@ describe('calcTCO – electric car (with loan)', () => {
     const futureTco = calcTCO({ ...baseElectricCar, taxStartYear: 2029 }, 5);
     // Inclusive 2029-2033 window: 2029-2030 are free and 2031-2033 add €9/year at 1800 kg, totaling €27.
     expect(futureTco.vehicleTax).toBe(27);
+  });
+
+  test('THG-Quote is ignored for non-BEV drivetrains', () => {
+    const phevTco = calcTCO({ ...basePetrolCar, carType: 'hybrid_phev', annualThgQuote: 500 }, 5);
+    expect(phevTco.thgQuotaBenefit).toBe(0);
   });
 });
 

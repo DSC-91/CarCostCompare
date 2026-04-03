@@ -45,4 +45,18 @@ describe('app decimal input handling', () => {
 
     expect(getCurrentCarFuelCostCell().textContent).toMatch(/2\.048/);
   });
+
+  test('switching a car to electric enables THG-Quote and applies the default value', () => {
+    const firstCard = document.querySelector('.car-card');
+    const typeSelect = firstCard.querySelector('.f-cartype');
+    const thgInput = firstCard.querySelector('.f-thg');
+
+    expect(thgInput.disabled).toBe(true);
+
+    typeSelect.value = 'electric';
+    typeSelect.dispatchEvent(new window.Event('change', { bubbles: true }));
+
+    expect(thgInput.disabled).toBe(false);
+    expect(thgInput.value).toBe('300');
+  });
 });
