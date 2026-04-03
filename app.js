@@ -11,9 +11,10 @@ if (typeof require !== 'undefined' && typeof window === 'undefined') {
   _calc = window;
 }
 
-const { CAR_TYPES, DEFAULT_ANNUAL_KM, DEFAULT_YEARS, compareCars, formatEur } = _calc;
+const { CAR_TYPES, DEFAULT_ANNUAL_KM, DEFAULT_YEARS, compareCars, formatEur, clampNumber } = _calc;
 const MIN_CAR_WEIGHT = 500;
 const DEFAULT_CAR_WEIGHT = 1400;
+const MAX_LOAN_RATE_PERCENT = 30;
 
 // ─── App state ────────────────────────────────────────────────────────────────
 let cars   = [];       // array of car objects (mutable state)
@@ -246,10 +247,7 @@ function updateCarFromCard(id, card) {
     const input = card.querySelector(selector);
     const { min = 0, max = Infinity, integer = false } = options;
     const rawValue = integer ? parseInt(input.value, 10) : parseFloat(input.value);
-    let value = Number.isFinite(rawValue) ? rawValue : fallback;
-
-    if (integer) value = Math.trunc(value);
-    value = Math.min(max, Math.max(min, value));
+    const value = clampNumber(rawValue, { min, max, fallback, integer });
     input.value = String(value);
     return value;
   };
@@ -268,7 +266,8 @@ function updateCarFromCard(id, card) {
   car.co2              = readNumber('.f-co2', 0);
   car.weight           = readNumber('.f-weight', DEFAULT_CAR_WEIGHT, { min: MIN_CAR_WEIGHT });
   car.loanAmount       = readNumber('.f-loan-amount', 0);
-  car.loanRate         = readNumber('.f-loan-rate', 0, { max: 30 }) / 100;
+  // Cap displayed APR input at 30% to keep obvious input mistakes out of the comparison.
+  car.loanRate         = readNumber('.f-loan-rate', 0, { max: MAX_LOAN_RATE_PERCENT }) / 100;
   car.loanTermMonths   = readNumber('.f-loan-term', 0, { min: 0, max: 120, integer: true });
 }
 

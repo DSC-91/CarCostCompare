@@ -234,6 +234,14 @@ describe('calcTCO – comparison period 1 year vs 10 years', () => {
     expect(Number.isFinite(tco.monthlyCost)).toBe(true);
   });
 
+  test('negative comparison period falls back to default years', () => {
+    expect(calcTCO(basePetrolCar, -3).years).toBe(DEFAULT_YEARS);
+  });
+
+  test('non-numeric comparison period falls back to default years', () => {
+    expect(calcTCO(basePetrolCar, 'abc').years).toBe(DEFAULT_YEARS);
+  });
+
   test('residual value is capped at purchase price and negative costs are ignored', () => {
     const tco = calcTCO({
       ...basePetrolCar,

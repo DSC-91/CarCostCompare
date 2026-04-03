@@ -17,6 +17,7 @@ const CAR_TYPES = {
 
 const DEFAULT_ANNUAL_KM = 15000;
 const DEFAULT_YEARS     = 5;
+// Post-2030 BEV tax rate in EUR per 100 kg of vehicle weight.
 const ELECTRIC_TAX_RATE_PER_100KG = 0.5;
 
 function toFiniteNumber(value, fallback = 0) {
@@ -42,7 +43,7 @@ function roundCurrency(value) {
   return Math.round(value * 100) / 100;
 }
 
-function calcVehicleTaxTotal({ carType, displacement, co2, weight, years, startYear = new Date().getFullYear() }) {
+function calcMultiYearVehicleTax({ carType, displacement, co2, weight, years, startYear = new Date().getFullYear() }) {
   const safeYears = normalizeYears(years);
   const safeStartYear = clampNumber(startYear, { min: 0, fallback: new Date().getFullYear(), integer: true });
 
@@ -95,6 +96,7 @@ function calcKfzSteuer({ carType, displacement, co2, weight = 1500, taxYear = ne
 
   if (carType === 'electric') {
     if (safeTaxYear <= 2030) return 0;
+    // From 2031 onward, BEVs use a weight-based annual tax in this simplified model.
     return roundCurrency(Math.ceil(safeWeight / 100) * ELECTRIC_TAX_RATE_PER_100KG);
   }
 
@@ -211,7 +213,7 @@ function calcTCO(car, years) {
   const fuelCost        = (annualKm / 100) * consumption * fuelPrice * safeYears;
   const maintenanceCost = annualMaintenance * safeYears;
   const insuranceCost   = annualInsurance   * safeYears;
-  const vehicleTax      = calcVehicleTaxTotal({
+  const vehicleTax      = calcMultiYearVehicleTax({
     carType:      car.carType,
     displacement,
     co2,
@@ -267,7 +269,7 @@ function formatEur(value) {
 
 // ─── Exports (Node.js / Jest and browser globals) ────────────────────────────
 
-const _calcExports = { CAR_TYPES, DEFAULT_ANNUAL_KM, DEFAULT_YEARS, calcKfzSteuer, calcFinancing, calcTCO, compareCars, formatEur };
+const _calcExports = { CAR_TYPES, DEFAULT_ANNUAL_KM, DEFAULT_YEARS, calcKfzSteuer, calcFinancing, calcTCO, compareCars, formatEur, clampNumber };
 
 if (typeof module !== 'undefined' && module.exports) {
   module.exports = _calcExports;
