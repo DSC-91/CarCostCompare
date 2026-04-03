@@ -20,6 +20,10 @@ function getCurrentCarFuelCostCell() {
   return document.querySelector('.badge-current').closest('tr').children[2];
 }
 
+function getFirstCarCard() {
+  return document.querySelector('.car-card');
+}
+
 describe('app decimal input handling', () => {
   beforeEach(() => {
     jest.resetModules();
@@ -47,7 +51,7 @@ describe('app decimal input handling', () => {
   });
 
   test('switching a car to electric enables THG-Quote and applies the default value', () => {
-    const firstCard = document.querySelector('.car-card');
+    const firstCard = getFirstCarCard();
     const typeSelect = firstCard.querySelector('.f-cartype');
     const thgInput = firstCard.querySelector('.f-thg');
 
@@ -58,5 +62,53 @@ describe('app decimal input handling', () => {
 
     expect(thgInput.disabled).toBe(false);
     expect(thgInput.value).toBe('300');
+  });
+
+  test('preset dropdown includes researched diesel and EV options', () => {
+    const presetOptions = Array.from(getFirstCarCard().querySelectorAll('.f-preset option'))
+      .map(option => option.textContent);
+
+    expect(presetOptions).toEqual(expect.arrayContaining([
+      'Audi A3 Sportback 35 TDI (150 PS)',
+      'Audi A4 35 TDI',
+      'Tesla Model 3 RWD',
+      'Škoda Enyaq 85',
+      'VW ID.7 Pro',
+      'Hyundai Kona Elektro 65',
+    ]));
+  });
+
+  test('selecting the Audi A3 diesel preset fills the expected values', () => {
+    const presetSelect = getFirstCarCard().querySelector('.f-preset');
+
+    presetSelect.value = 'audi_a3_35_tdi';
+    presetSelect.dispatchEvent(new window.Event('change', { bubbles: true }));
+
+    const updatedCard = getFirstCarCard();
+    expect(updatedCard.querySelector('.f-name').value).toBe('Audi A3 Sportback 35 TDI (150 PS)');
+    expect(updatedCard.querySelector('.f-cartype').value).toBe('diesel');
+    expect(updatedCard.querySelector('.f-consumption').value).toBe('4.8');
+    expect(updatedCard.querySelector('.f-price').value).toBe('39200');
+    expect(updatedCard.querySelector('.f-displacement').value).toBe('1968');
+    expect(updatedCard.querySelector('.f-co2').value).toBe('125');
+    expect(updatedCard.querySelector('.f-weight').value).toBe('1415');
+  });
+
+  test('selecting an EV preset enables THG-Quote and resets drivetrain-specific fields', () => {
+    const presetSelect = getFirstCarCard().querySelector('.f-preset');
+
+    presetSelect.value = 'tesla_model_3_rwd';
+    presetSelect.dispatchEvent(new window.Event('change', { bubbles: true }));
+
+    const updatedCard = getFirstCarCard();
+    expect(updatedCard.querySelector('.f-name').value).toBe('Tesla Model 3 RWD');
+    expect(updatedCard.querySelector('.f-cartype').value).toBe('electric');
+    expect(updatedCard.querySelector('.f-thg').disabled).toBe(false);
+    expect(updatedCard.querySelector('.f-thg').value).toBe('300');
+    expect(updatedCard.querySelector('.f-fuel-unit').textContent).toBe('EUR/kWh');
+    expect(updatedCard.querySelector('.f-displacement').value).toBe('0');
+    expect(updatedCard.querySelector('.f-displacement').disabled).toBe(true);
+    expect(updatedCard.querySelector('.f-co2').value).toBe('0');
+    expect(updatedCard.querySelector('.f-co2').disabled).toBe(true);
   });
 });
