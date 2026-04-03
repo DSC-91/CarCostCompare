@@ -243,9 +243,6 @@ function buildCarCard(car) {
     if (isE && previousType !== 'electric' && clampNumber(thgInput.value, { fallback: 0 }) === 0) {
       thgInput.value = String(DEFAULT_THG_QUOTA);
     }
-    if (!isE) {
-      thgInput.value = thgInput.value || '0';
-    }
     updateCarFromCard(car.id, card);
   });
 
