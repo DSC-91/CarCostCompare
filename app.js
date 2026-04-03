@@ -239,21 +239,34 @@ function buildCarCard(car) {
 function updateCarFromCard(id, card) {
   const car = cars.find(c => c.id === id);
   if (!car) return;
+
+  const readNumber = (selector, fallback, options = {}) => {
+    const input = card.querySelector(selector);
+    const { min = 0, max = Infinity, integer = false } = options;
+    let value = integer ? parseInt(input.value, 10) : parseFloat(input.value);
+
+    if (!Number.isFinite(value)) value = fallback;
+    if (integer) value = Math.trunc(value);
+    value = Math.min(max, Math.max(min, value));
+    input.value = integer ? String(value) : String(value);
+    return value;
+  };
+
   car.name             = card.querySelector('.f-name').value.trim() || `Fahrzeug ${id}`;
   car.carType          = card.querySelector('.f-cartype').value;
-  car.purchasePrice    = parseFloat(card.querySelector('.f-price').value)       || 0;
-  car.residualValue    = parseFloat(card.querySelector('.f-residual').value)    || 0;
-  car.annualKm         = parseFloat(card.querySelector('.f-km').value)          || DEFAULT_ANNUAL_KM;
-  car.consumption      = parseFloat(card.querySelector('.f-consumption').value) || 0;
-  car.fuelPrice        = parseFloat(card.querySelector('.f-fuelprice').value)   || 0;
-  car.annualInsurance  = parseFloat(card.querySelector('.f-insurance').value)   || 0;
-  car.annualMaintenance= parseFloat(card.querySelector('.f-maintenance').value) || 0;
-  car.displacement     = parseFloat(card.querySelector('.f-displacement').value)|| 0;
-  car.co2              = parseFloat(card.querySelector('.f-co2').value)         || 0;
-  car.weight           = parseFloat(card.querySelector('.f-weight').value)      || 1400;
-  car.loanAmount       = parseFloat(card.querySelector('.f-loan-amount').value) || 0;
-  car.loanRate         = (parseFloat(card.querySelector('.f-loan-rate').value)  || 0) / 100;
-  car.loanTermMonths   = parseInt(card.querySelector('.f-loan-term').value, 10) || 0;
+  car.purchasePrice    = readNumber('.f-price', 0);
+  car.residualValue    = readNumber('.f-residual', 0, { max: car.purchasePrice });
+  car.annualKm         = readNumber('.f-km', DEFAULT_ANNUAL_KM, { min: 0 });
+  car.consumption      = readNumber('.f-consumption', 0);
+  car.fuelPrice        = readNumber('.f-fuelprice', 0);
+  car.annualInsurance  = readNumber('.f-insurance', 0);
+  car.annualMaintenance= readNumber('.f-maintenance', 0);
+  car.displacement     = readNumber('.f-displacement', 0);
+  car.co2              = readNumber('.f-co2', 0);
+  car.weight           = readNumber('.f-weight', 1400, { min: 500 });
+  car.loanAmount       = readNumber('.f-loan-amount', 0);
+  car.loanRate         = readNumber('.f-loan-rate', 0, { max: 30 }) / 100;
+  car.loanTermMonths   = readNumber('.f-loan-term', 0, { min: 0, max: 120, integer: true });
 }
 
 // ─── Results rendering ────────────────────────────────────────────────────────
@@ -273,7 +286,10 @@ const COST_LABELS = {
 };
 
 function renderResults() {
-  const years = parseInt(yearsInput.value, 10) || DEFAULT_YEARS;
+  let years = parseInt(yearsInput.value, 10);
+  if (!Number.isInteger(years) || years < 1) years = DEFAULT_YEARS;
+  if (years > 20) years = 20;
+  yearsInput.value = String(years);
   if (cars.length === 0) {
     resultsSection.style.display = 'none';
     return;

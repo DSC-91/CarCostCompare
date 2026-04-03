@@ -18,6 +18,46 @@ const CAR_TYPES = {
 const DEFAULT_ANNUAL_KM = 15000;
 const DEFAULT_YEARS     = 5;
 
+function toFiniteNumber(value, fallback = 0) {
+  const parsed = Number(value);
+  return Number.isFinite(parsed) ? parsed : fallback;
+}
+
+function clampNumber(value, { min = 0, max = Infinity, fallback = 0, integer = false } = {}) {
+  let parsed = toFiniteNumber(value, fallback);
+  if (integer) parsed = Math.trunc(parsed);
+  if (parsed < min) return min;
+  if (parsed > max) return max;
+  return parsed;
+}
+
+function normalizeYears(years) {
+  const parsed = toFiniteNumber(years, DEFAULT_YEARS);
+  if (parsed < 1) return DEFAULT_YEARS;
+  return Math.trunc(parsed);
+}
+
+function calcVehicleTaxTotal({ carType, displacement, co2, weight, years, startYear = new Date().getFullYear() }) {
+  const safeYears = normalizeYears(years);
+  const safeStartYear = clampNumber(startYear, { min: 0, fallback: new Date().getFullYear(), integer: true });
+
+  if (carType !== 'electric') {
+    return calcKfzSteuer({ carType, displacement, co2, weight, taxYear: safeStartYear }) * safeYears;
+  }
+
+  let totalTax = 0;
+  for (let offset = 0; offset < safeYears; offset += 1) {
+    totalTax += calcKfzSteuer({
+      carType,
+      displacement,
+      co2,
+      weight,
+      taxYear: safeStartYear + offset,
+    });
+  }
+  return totalTax;
+}
+
 // ─── Kfz-Steuer (German vehicle tax) ─────────────────────────────────────────
 
 /**
@@ -39,14 +79,21 @@ const DEFAULT_YEARS     = 5;
  * @param {number} params.displacement – Engine displacement in ccm (ignored for BEV)
  * @param {number} params.co2          – CO2 emissions in g/km (0 for BEV)
  * @param {number} [params.weight]     – Kerb weight in kg (used for BEV after 2030)
+ * @param {number} [params.taxYear]    – Calendar year for applying BEV tax rules
  * @returns {number} Annual tax in EUR
  */
-function calcKfzSteuer({ carType, displacement, co2, weight = 1500 }) {
+function calcKfzSteuer({ carType, displacement, co2, weight = 1500, taxYear = new Date().getFullYear() }) {
+  const safeDisplacement = clampNumber(displacement);
+  const safeCo2 = clampNumber(co2);
+  const safeWeight = clampNumber(weight);
+  const safeTaxYear = clampNumber(taxYear, { min: 0, fallback: new Date().getFullYear(), integer: true });
+
   if (carType === 'electric') {
-    return 0; // Free until end of 2030
+    if (safeTaxYear <= 2030) return 0;
+    return Math.round((Math.ceil(safeWeight / 100) * 0.5) * 100) / 100;
   }
 
-  const ccmUnits   = Math.ceil(displacement / 100);
+  const ccmUnits   = Math.ceil(safeDisplacement / 100);
   let   basePerCcm = 0;
 
   if (carType === 'diesel') {
@@ -59,7 +106,7 @@ function calcKfzSteuer({ carType, displacement, co2, weight = 1500 }) {
   const baseTax = ccmUnits * basePerCcm;
 
   // CO2 surcharge (above 95 g/km threshold)
-  const co2Surplus = Math.max(0, co2 - 95);
+  const co2Surplus = Math.max(0, safeCo2 - 95);
   let co2Tax = 0;
   if (co2Surplus > 0) {
     const bands = [
@@ -92,19 +139,25 @@ function calcKfzSteuer({ carType, displacement, co2, weight = 1500 }) {
  * @returns {{ monthlyPayment: number, totalInterest: number }}
  */
 function calcFinancing(loanAmount, annualRate, termMonths) {
-  if (loanAmount <= 0 || termMonths <= 0) {
+  const safeLoanAmount = clampNumber(loanAmount);
+  const safeAnnualRate = clampNumber(annualRate);
+  const safeTermMonths = clampNumber(termMonths, { integer: true });
+
+  if (safeLoanAmount <= 0 || safeTermMonths <= 0) {
     return { monthlyPayment: 0, totalInterest: 0 };
   }
-  if (annualRate === 0) {
-    const monthly = loanAmount / termMonths;
+
+  if (safeAnnualRate === 0) {
+    const monthly = safeLoanAmount / safeTermMonths;
     return { monthlyPayment: Math.round(monthly * 100) / 100, totalInterest: 0 };
   }
-  const r        = annualRate / 12;
-  const monthly  = loanAmount * (r * Math.pow(1 + r, termMonths)) / (Math.pow(1 + r, termMonths) - 1);
-  const total    = monthly * termMonths;
+
+  const r        = safeAnnualRate / 12;
+  const monthly  = safeLoanAmount * (r * Math.pow(1 + r, safeTermMonths)) / (Math.pow(1 + r, safeTermMonths) - 1);
+  const total    = monthly * safeTermMonths;
   return {
     monthlyPayment: Math.round(monthly * 100) / 100,
-    totalInterest:  Math.round((total - loanAmount) * 100) / 100,
+    totalInterest:  Math.round((total - safeLoanAmount) * 100) / 100,
   };
 }
 
@@ -134,30 +187,48 @@ function calcFinancing(loanAmount, annualRate, termMonths) {
  * @returns {object} Detailed cost breakdown
  */
 function calcTCO(car, years) {
-  const fuelCost        = (car.annualKm / 100) * car.consumption * car.fuelPrice * years;
-  const maintenanceCost = car.annualMaintenance * years;
-  const insuranceCost   = car.annualInsurance   * years;
-  const vehicleTax      = calcKfzSteuer({
+  const safeYears = normalizeYears(years);
+  const purchasePrice = clampNumber(car.purchasePrice);
+  const residualValue = Math.min(clampNumber(car.residualValue), purchasePrice);
+  const annualKm = clampNumber(car.annualKm);
+  const consumption = clampNumber(car.consumption);
+  const fuelPrice = clampNumber(car.fuelPrice);
+  const annualMaintenance = clampNumber(car.annualMaintenance);
+  const annualInsurance = clampNumber(car.annualInsurance);
+  const displacement = clampNumber(car.displacement);
+  const co2 = clampNumber(car.co2);
+  const weight = clampNumber(car.weight);
+  const loanAmount = clampNumber(car.loanAmount);
+  const loanRate = clampNumber(car.loanRate);
+  const loanTermMonths = clampNumber(car.loanTermMonths, { integer: true });
+  const taxStartYear = clampNumber(car.taxStartYear, { min: 0, fallback: new Date().getFullYear(), integer: true });
+
+  const fuelCost        = (annualKm / 100) * consumption * fuelPrice * safeYears;
+  const maintenanceCost = annualMaintenance * safeYears;
+  const insuranceCost   = annualInsurance   * safeYears;
+  const vehicleTax      = calcVehicleTaxTotal({
     carType:      car.carType,
-    displacement: car.displacement,
-    co2:          car.co2,
-    weight:       car.weight,
-  }) * years;
+    displacement,
+    co2,
+    weight,
+    years:        safeYears,
+    startYear:    taxStartYear,
+  });
 
-  const depreciation = car.purchasePrice - car.residualValue;
+  const depreciation = purchasePrice - residualValue;
 
-  const { totalInterest } = calcFinancing(car.loanAmount, car.loanRate, car.loanTermMonths);
+  const { totalInterest } = calcFinancing(loanAmount, loanRate, loanTermMonths);
 
   const totalCost = depreciation + fuelCost + maintenanceCost + insuranceCost + vehicleTax + totalInterest;
-  const monthlyCost = totalCost / (years * 12);
+  const monthlyCost = totalCost / (safeYears * 12);
 
   return {
     name:             car.name,
     carType:          car.carType,
     isCurrent:        car.isCurrent,
-    years,
-    purchasePrice:    car.purchasePrice,
-    residualValue:    car.residualValue,
+    years:            safeYears,
+    purchasePrice,
+    residualValue,
     depreciation:     Math.round(depreciation     * 100) / 100,
     fuelCost:         Math.round(fuelCost          * 100) / 100,
     maintenanceCost:  Math.round(maintenanceCost   * 100) / 100,

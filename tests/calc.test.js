@@ -18,6 +18,10 @@ describe('calcKfzSteuer', () => {
     expect(calcKfzSteuer({ carType: 'electric', displacement: 0, co2: 0, weight: 1800 })).toBe(0);
   });
 
+  test('electric car after 2030 uses weight-based tax', () => {
+    expect(calcKfzSteuer({ carType: 'electric', displacement: 0, co2: 0, weight: 1800, taxYear: 2031 })).toBe(9);
+  });
+
   test('petrol car with no CO2 surplus uses only displacement component', () => {
     // 1400 ccm petrol, 90 g/km CO2 (below 95 threshold)
     // = ceil(1400/100) * 2.00 = 14 * 2.00 = 28.00
@@ -83,6 +87,12 @@ describe('calcFinancing', () => {
 
   test('zero interest rate spreads principal evenly', () => {
     const result = calcFinancing(12000, 0, 12);
+    expect(result.monthlyPayment).toBe(1000);
+    expect(result.totalInterest).toBe(0);
+  });
+
+  test('negative interest rate is treated as zero interest', () => {
+    const result = calcFinancing(12000, -0.01, 12);
     expect(result.monthlyPayment).toBe(1000);
     expect(result.totalInterest).toBe(0);
   });
@@ -203,6 +213,11 @@ describe('calcTCO – electric car (with loan)', () => {
     // electric consumption 17 kWh at €0.46 vs petrol 7L at €1.82
     expect(tco.fuelCost).toBeLessThan(petrolTco.fuelCost);
   });
+
+  test('electric car tax rolls over after 2030 in multi-year comparisons', () => {
+    const futureTco = calcTCO({ ...baseElectricCar, taxStartYear: 2029 }, 5);
+    expect(futureTco.vehicleTax).toBe(27);
+  });
 });
 
 describe('calcTCO – comparison period 1 year vs 10 years', () => {
@@ -210,6 +225,30 @@ describe('calcTCO – comparison period 1 year vs 10 years', () => {
     const tco1  = calcTCO(basePetrolCar, 1);
     const tco10 = calcTCO(basePetrolCar, 10);
     expect(tco1.totalCost).toBeLessThan(tco10.totalCost);
+  });
+
+  test('invalid comparison period falls back to default years', () => {
+    const tco = calcTCO(basePetrolCar, 0);
+    expect(tco.years).toBe(DEFAULT_YEARS);
+    expect(Number.isFinite(tco.monthlyCost)).toBe(true);
+  });
+
+  test('residual value is capped at purchase price and negative costs are ignored', () => {
+    const tco = calcTCO({
+      ...basePetrolCar,
+      purchasePrice: 10000,
+      residualValue: 15000,
+      annualKm: -1000,
+      annualMaintenance: -300,
+      annualInsurance: -500,
+      consumption: -2,
+      fuelPrice: -1,
+    }, 5);
+
+    expect(tco.depreciation).toBe(0);
+    expect(tco.fuelCost).toBe(0);
+    expect(tco.maintenanceCost).toBe(0);
+    expect(tco.insuranceCost).toBe(0);
   });
 });
 
