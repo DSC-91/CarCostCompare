@@ -41,7 +41,26 @@ npm install
 npm test
 ```
 
-Tests befinden sich in `tests/calc.test.js` und prüfen die gesamte Berechnungslogik (Kfz-Steuer, Finanzierung, TCO-Gesamtkostenrechnung).
+Tests befinden sich in `tests/calc.test.js` und `tests/app.test.js`. Sie decken die Berechnungslogik sowie wichtige UI-Eingabeflüsse ab.
+
+## Für Agenten & Mitwirkende
+
+Die schnellste Iteration auf diesem Repo:
+
+1. `README.md` lesen (Produktkontext + Nutzer-Workflow)
+2. `CONTRIBUTING.md` lesen (Setup, Validierung, Bearbeitungsregeln)
+3. Relevante Datei direkt bearbeiten:
+   - `calc.js` → Berechnungslogik
+   - `app.js` → DOM/UI-Verhalten
+   - `index.html` → Markup
+   - `styles.css` → Styling
+   - `tests/*.test.js` → Regressionstests
+
+Wichtige Rahmenbedingungen:
+
+- Kein Build-Schritt: Änderungen lassen sich direkt per Browser oder lokalem HTTP-Server prüfen.
+- Bestehende Validierung: `npm test`
+- Kleine, gezielte Änderungen bevorzugen und Dokumentation aktualisieren, wenn sich Workflow oder Struktur ändern.
 
 ## Projektstruktur
 
@@ -51,7 +70,9 @@ Tests befinden sich in `tests/calc.test.js` und prüfen die gesamte Berechnungsl
 ├── calc.js             # Berechnungslogik (Kfz-Steuer, TCO, Finanzierung)
 ├── app.js              # UI-Logik & DOM-Manipulation
 ├── tests/
-│   └── calc.test.js    # Jest-Unit-Tests für die Berechnungslogik
+│   ├── calc.test.js    # Jest-Unit-Tests für die Berechnungslogik
+│   └── app.test.js     # Jest-Tests für DOM/UI-Verhalten
+├── CONTRIBUTING.md     # Setup- und Iterationshinweise für Mitwirkende/Agenten
 └── package.json        # npm-Konfiguration (Jest)
 ```
 
