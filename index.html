@@ -1,0 +1,103 @@
+<!DOCTYPE html>
+<html lang="de">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>CarCostCompare – Fahrzeugkostenvergleich Deutschland</title>
+  <meta name="description" content="Vergleiche die Gesamtkosten verschiedener Fahrzeuge über mehrere Jahre – ideal für den Kfz-Wechsel in Deutschland.">
+  <link rel="stylesheet" href="styles.css">
+</head>
+<body>
+
+<header>
+  <svg width="32" height="32" fill="none" stroke="#fff" stroke-width="1.8" viewBox="0 0 24 24" aria-hidden="true">
+    <path d="M3 13l1.5-4.5A2 2 0 0 1 6.38 7H17.6a2 2 0 0 1 1.9 1.38L21 13"/>
+    <path d="M3 13v4h1a2 2 0 0 0 4 0h6a2 2 0 0 0 4 0h1v-4"/>
+    <circle cx="7" cy="17" r="1"/><circle cx="17" cy="17" r="1"/>
+  </svg>
+  <div>
+    <h1>CarCostCompare</h1>
+    <p>Gesamtkostenvergleich für Fahrzeuge in Deutschland</p>
+  </div>
+</header>
+
+<main>
+
+  <!-- Controls bar -->
+  <div class="controls-bar">
+    <button id="add-car-btn" class="btn btn-primary">
+      <svg width="16" height="16" fill="none" stroke="currentColor" stroke-width="2" viewBox="0 0 24 24" aria-hidden="true">
+        <line x1="12" y1="5" x2="12" y2="19"/><line x1="5" y1="12" x2="19" y2="12"/>
+      </svg>
+      Fahrzeug hinzufügen
+    </button>
+    <span class="spacer"></span>
+    <label for="years-input">Betrachtungszeitraum:</label>
+    <input type="number" id="years-input" value="5" min="1" max="20" step="1" style="width:70px" aria-label="Jahre">
+    <label for="years-input">Jahre</label>
+    <button id="calc-btn" class="btn btn-primary">
+      <svg width="16" height="16" fill="none" stroke="currentColor" stroke-width="2" viewBox="0 0 24 24" aria-hidden="true">
+        <rect x="4" y="2" width="16" height="20" rx="2"/>
+        <path d="M9 7h6M9 12h6M9 17h4"/>
+      </svg>
+      Berechnen
+    </button>
+  </div>
+
+  <!-- Car cards grid -->
+  <div id="cars-grid" role="list" aria-label="Fahrzeugliste"></div>
+
+  <!-- Results section -->
+  <section id="results-section" aria-label="Vergleichsergebnis" style="display:none">
+    <h2>Vergleichsergebnis</h2>
+
+    <!-- Savings callout -->
+    <div id="callout" class="callout callout-neutral" role="status" aria-live="polite"></div>
+
+    <!-- TCO bar chart -->
+    <div class="chart-wrap">
+      <h3>Gesamtkosten im Vergleich</h3>
+      <div class="chart-container">
+        <canvas id="tco-chart" aria-label="Gesamtkostenvergleich Balkendiagramm"></canvas>
+      </div>
+    </div>
+
+    <!-- Stacked breakdown chart -->
+    <div class="chart-wrap">
+      <h3>Kostenaufteilung (gestapelt)</h3>
+      <div class="chart-container">
+        <canvas id="breakdown-chart" aria-label="Kostenaufteilung gestapeltes Balkendiagramm"></canvas>
+      </div>
+    </div>
+
+    <!-- Summary table -->
+    <div class="table-wrap">
+      <table id="summary-table" aria-label="Kostenzusammenfassung">
+        <thead id="summary-thead"></thead>
+        <tbody id="summary-tbody"></tbody>
+      </table>
+    </div>
+
+    <!-- Calculation notes -->
+    <details style="font-size:.8rem;color:var(--muted);margin-top:.5rem">
+      <summary style="cursor:pointer;font-weight:600">ℹ️ Hinweise zur Berechnung</summary>
+      <ul style="margin:.5rem 0 0;padding-left:1.25rem;line-height:1.8">
+        <li><strong>Wertverlust</strong>: Kaufpreis − Restwert am Ende des Betrachtungszeitraums.</li>
+        <li><strong>Kraftstoff / Strom</strong>: (km/Jahr ÷ 100) × Verbrauch × Preis × Jahre.</li>
+        <li><strong>Kfz-Steuer</strong>: Vereinfachtes Modell nach deutschem Recht 2024 (Hubraum + CO₂-Komponente). Elektrofahrzeuge sind bis Ende 2030 befreit.</li>
+        <li><strong>Finanzierungskosten</strong>: Annuitätendarlehen; Zinsen = Gesamtrückzahlung − Darlehensbetrag.</li>
+        <li>Alle Werte sind Richtwerte. Individuelle Tarife, regionale Preise und Sonderkonditionen werden nicht berücksichtigt.</li>
+      </ul>
+    </details>
+  </section>
+
+</main>
+
+<!-- Chart.js (local copy) -->
+<script src="chart.umd.min.js"></script>
+<!-- Calculation engine -->
+<script src="calc.js"></script>
+<!-- App logic -->
+<script src="app.js"></script>
+</body>
+</html>
