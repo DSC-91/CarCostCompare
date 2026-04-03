@@ -234,12 +234,15 @@ function buildCarCard(car) {
   // ── event: live sync all inputs
   card.querySelectorAll('input, select').forEach(el => {
     el.addEventListener('input', () => updateCarFromCard(car.id, card));
+    if (el.matches('input[type="number"]')) {
+      el.addEventListener('change', () => updateCarFromCard(car.id, card, { normalizeNumbers: true }));
+    }
   });
 
   return card;
 }
 
-function updateCarFromCard(id, card) {
+function updateCarFromCard(id, card, { normalizeNumbers = false } = {}) {
   const car = cars.find(c => c.id === id);
   if (!car) return;
 
@@ -247,9 +250,15 @@ function updateCarFromCard(id, card) {
     const input = card.querySelector(selector);
     if (!input) return fallback;
     const { min = 0, max = Infinity, integer = false } = options;
-    const rawValue = integer ? parseInt(input.value, 10) : parseFloat(input.value);
+
+    if (!normalizeNumbers && (input.value.trim() === '' || (input.validity && input.validity.badInput))) {
+      return fallback;
+    }
+
+    const normalizedInput = input.value.replace(',', '.');
+    const rawValue = integer ? parseInt(normalizedInput, 10) : parseFloat(normalizedInput);
     const value = clampNumber(rawValue, { min, max, fallback, integer });
-    input.value = String(value);
+    if (normalizeNumbers) input.value = String(value);
     return value;
   };
 
